@@ -363,15 +363,14 @@ impl Parser {
                 parts.push(TemplatePart::Literal(remaining[..start].to_string()));
             }
 
+            let interpolation_col = span.col + remaining[..start].chars().count() + 1;
             let after = &remaining[start + 2..];
             if let Some(end) = after.find('}') {
                 let expr_str = &after[..end];
-                let interpolation_col = span.col + remaining[..start].chars().count() + 1;
                 let expr = Self::parse_dotted_ident(expr_str, span.line, interpolation_col)?;
                 parts.push(TemplatePart::Interpolated(Box::new(expr)));
                 remaining = &after[end + 1..];
             } else {
-                let interpolation_col = span.col + remaining[..start].chars().count() + 1;
                 return Err(ParserError::Parse {
                     message: "unterminated template interpolation".to_string(),
                     line: span.line,
@@ -400,21 +399,13 @@ impl Parser {
         let mut parts = trimmed.split('.');
         let first = parts.next().expect("trimmed string is not empty");
         if !is_valid_ident(first) {
-            return Err(ParserError::Parse {
-                message: format!("invalid template interpolation: {}", trimmed),
-                line,
-                col,
-            });
+            return Err(invalid_template_interpolation_error(trimmed, line, col));
         }
 
         let mut expr = Expr::Identifier(first.to_string());
         for part in parts {
             if !is_valid_ident(part) {
-                return Err(ParserError::Parse {
-                    message: format!("invalid template interpolation: {}", trimmed),
-                    line,
-                    col,
-                });
+                return Err(invalid_template_interpolation_error(trimmed, line, col));
             }
             expr = Expr::MemberAccess(Box::new(expr), part.to_string());
         }
@@ -488,4 +479,12 @@ fn is_valid_ident(s: &str) -> bool {
         _ => return false,
     }
     chars.all(|ch| ch.is_ascii_alphanumeric() || ch == '_')
+}
+
+fn invalid_template_interpolation_error(s: &str, line: usize, col: usize) -> ParserError {
+    ParserError::Parse {
+        message: format!("invalid template interpolation: {}", s),
+        line,
+        col,
+    }
 }
