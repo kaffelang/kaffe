@@ -1,0 +1,11 @@
+type User =
+  id: string
+  name: string
+  age?: number
+  role: "admin" | "editor" | "reader"
+
+export fn canEdit(user: User): boolean =>
+  user.role in ["admin", "editor"]
+
+export fn greet(user: User): string =>
+  "Hello, #{user.name}"
