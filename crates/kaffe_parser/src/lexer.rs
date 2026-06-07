@@ -266,8 +266,10 @@ fn lex_line(
                 }
             }
             '+' => {
-                // Check if this is an export marker (at start of statement) or arithmetic plus
-                // Export marker appears when previous token is Newline, Indent, Dedent, or we're at start
+                // Context-sensitive lexing: '+' is ExportMarker at statement boundaries,
+                // Plus in expressions. This assumes export markers only appear at the
+                // start of item declarations (after Newline/Indent/Dedent or at file start).
+                // The parser will validate that ExportMarker is followed by 'type' or 'fn'.
                 let is_export_marker = tokens.is_empty() 
                     || matches!(tokens.last().map(|t| &t.token), Some(Token::Newline) | Some(Token::Indent) | Some(Token::Dedent));
                 pos += 1;
