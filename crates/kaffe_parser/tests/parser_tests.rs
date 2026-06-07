@@ -1,4 +1,4 @@
-use kaffe_ast::Item;
+use kaffe_ast::{Expr, Item};
 use kaffe_parser::parse;
 
 #[test]
@@ -32,4 +32,42 @@ fn test_parse_export_fn() {
     let src = "+fn hello(name: string): string =>\n  \"Hello\"";
     let module = parse(src).expect("parse failed");
     assert!(matches!(&module.items[0], Item::Export(_)));
+}
+
+#[test]
+fn test_parse_if_with_in_condition() {
+    let src = "fn canEdit(role: string): boolean =>\n  if role in [\"admin\"]\n    true\n  else\n    false";
+    let module = parse(src).expect("parse failed");
+
+    let Item::Function(function) = &module.items[0] else {
+        panic!("expected Function");
+    };
+
+    match &function.body {
+        Expr::If { condition, .. } => {
+            assert!(matches!(condition.as_ref(), Expr::In(_, _)));
+        }
+        _ => panic!("expected If expression"),
+    }
+}
+
+#[test]
+fn test_reject_unterminated_template_interpolation() {
+    let src = "fn greet(name: string): string =>\n  \"Hello, #{name\"";
+    let err = parse(src).expect_err("expected parse error");
+    assert!(err.to_string().contains("unterminated template interpolation"));
+}
+
+#[test]
+fn test_reject_empty_template_interpolation() {
+    let src = "fn greet(name: string): string =>\n  \"Hello, #{ }\"";
+    let err = parse(src).expect_err("expected parse error");
+    assert!(err.to_string().contains("empty template interpolation"));
+}
+
+#[test]
+fn test_reject_invalid_template_interpolation() {
+    let src = "fn greet(name: string): string =>\n  \"Hello, #{.name}\"";
+    let err = parse(src).expect_err("expected parse error");
+    assert!(err.to_string().contains("invalid template interpolation"));
 }

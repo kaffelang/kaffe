@@ -40,10 +40,26 @@ fn cmd_build(args: &[String]) {
     }
 
     let input = &args[2];
-    let output = if args.len() >= 5 && args[3] == "--out" {
-        Some(args[4].as_str())
-    } else {
-        None
+    let output = match args.get(3).map(String::as_str) {
+        None => None,
+        Some("--out") => match args.get(4) {
+            Some(path) if args.len() == 5 => Some(path.as_str()),
+            Some(_) => {
+                eprintln!("Unexpected arguments after --out");
+                print_usage();
+                process::exit(1);
+            }
+            None => {
+                eprintln!("Missing output path after --out");
+                print_usage();
+                process::exit(1);
+            }
+        },
+        Some(_) => {
+            eprintln!("Unexpected arguments");
+            print_usage();
+            process::exit(1);
+        }
     };
 
     let source = read_file(input);

@@ -29,6 +29,14 @@ fn test_emit_template_string() {
 }
 
 #[test]
+fn test_emit_template_string_escapes_literal_sequences() {
+    let src = "fn greet(name: string): string =>\n  \"C:\\\\tmp ${name} #{name}\"";
+    let module = parse(src).expect("parse failed");
+    let ts = emit_module(&module);
+    assert!(ts.contains("`C:\\\\tmp \\${name} ${name}`"));
+}
+
+#[test]
 fn test_emit_in_operator() {
     let src = "fn canEdit(role: string): boolean =>\n  role in [\"admin\", \"editor\"]";
     let module = parse(src).expect("parse failed");

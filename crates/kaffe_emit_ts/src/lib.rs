@@ -181,5 +181,17 @@ fn escape_string(value: &str) -> String {
 }
 
 fn escape_template_literal(value: &str) -> String {
-    value.replace('`', "\\`")
+    let mut out = String::new();
+    let mut chars = value.chars().peekable();
+
+    while let Some(ch) = chars.next() {
+        match ch {
+            '\\' => out.push_str("\\\\"),
+            '`' => out.push_str("\\`"),
+            '$' if matches!(chars.peek(), Some('{')) => out.push_str("\\$"),
+            _ => out.push(ch),
+        }
+    }
+
+    out
 }

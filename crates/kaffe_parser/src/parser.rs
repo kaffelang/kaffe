@@ -280,8 +280,9 @@ impl Parser {
                 Ok(Expr::BoolLiteral(false))
             }
             Token::StringLit(value) => {
+                let span = self.peek_span().clone();
                 self.advance();
-                Ok(Self::parse_string_or_template(value))
+                Self::parse_string_or_template(value, &span)
             }
             Token::NumberLit(value) => {
                 self.advance();
@@ -326,7 +327,7 @@ impl Parser {
 
     fn parse_if_expr(&mut self) -> Result<Expr, ParserError> {
         self.expect_kind(&Token::KwIf)?;
-        let condition = self.parse_comparison()?;
+        let condition = self.parse_expr()?;
         let then_branch = self.parse_indented_expr()?;
         let else_branch = if self.peek() == &Token::KwElse {
             self.advance();
@@ -349,9 +350,9 @@ impl Parser {
         Ok(expr)
     }
 
-    fn parse_string_or_template(s: String) -> Expr {
+    fn parse_string_or_template(s: String, span: &Span) -> Result<Expr, ParserError> {
         if !s.contains("#{") {
-            return Expr::StringLiteral(s);
+            return Ok(Expr::StringLiteral(s));
         }
 
         let mut parts = Vec::new();
@@ -365,13 +366,17 @@ impl Parser {
             let after = &remaining[start + 2..];
             if let Some(end) = after.find('}') {
                 let expr_str = &after[..end];
-                let expr = Self::parse_dotted_ident(expr_str);
+                let interpolation_col = span.col + remaining[..start].chars().count() + 1;
+                let expr = Self::parse_dotted_ident(expr_str, span.line, interpolation_col)?;
                 parts.push(TemplatePart::Interpolated(Box::new(expr)));
                 remaining = &after[end + 1..];
             } else {
-                parts.push(TemplatePart::Literal(remaining[start..].to_string()));
-                remaining = "";
-                break;
+                let interpolation_col = span.col + remaining[..start].chars().count() + 1;
+                return Err(ParserError::Parse {
+                    message: "unterminated template interpolation".to_string(),
+                    line: span.line,
+                    col: interpolation_col,
+                });
             }
         }
 
@@ -379,25 +384,41 @@ impl Parser {
             parts.push(TemplatePart::Literal(remaining.to_string()));
         }
 
-        Expr::TemplateLiteral(parts)
+        Ok(Expr::TemplateLiteral(parts))
     }
 
-    fn parse_dotted_ident(s: &str) -> Expr {
-        let mut parts = s
-            .trim()
-            .split('.')
-            .filter(|part| !part.is_empty())
-            .map(str::to_string);
-
-        let Some(first) = parts.next() else {
-            return Expr::StringLiteral(String::new());
-        };
-
-        let mut expr = Expr::Identifier(first);
-        for part in parts {
-            expr = Expr::MemberAccess(Box::new(expr), part);
+    fn parse_dotted_ident(s: &str, line: usize, col: usize) -> Result<Expr, ParserError> {
+        let trimmed = s.trim();
+        if trimmed.is_empty() {
+            return Err(ParserError::Parse {
+                message: "empty template interpolation".to_string(),
+                line,
+                col,
+            });
         }
-        expr
+
+        let mut parts = trimmed.split('.');
+        let first = parts.next().expect("trimmed string is not empty");
+        if !is_valid_ident(first) {
+            return Err(ParserError::Parse {
+                message: format!("invalid template interpolation: {}", trimmed),
+                line,
+                col,
+            });
+        }
+
+        let mut expr = Expr::Identifier(first.to_string());
+        for part in parts {
+            if !is_valid_ident(part) {
+                return Err(ParserError::Parse {
+                    message: format!("invalid template interpolation: {}", trimmed),
+                    line,
+                    col,
+                });
+            }
+            expr = Expr::MemberAccess(Box::new(expr), part.to_string());
+        }
+        Ok(expr)
     }
 
     fn peek(&self) -> &Token {
@@ -458,4 +479,13 @@ impl Parser {
 
 fn same_kind(left: &Token, right: &Token) -> bool {
     std::mem::discriminant(left) == std::mem::discriminant(right)
+}
+
+fn is_valid_ident(s: &str) -> bool {
+    let mut chars = s.chars();
+    match chars.next() {
+        Some(ch) if ch.is_ascii_alphabetic() || ch == '_' => {}
+        _ => return false,
+    }
+    chars.all(|ch| ch.is_ascii_alphanumeric() || ch == '_')
 }

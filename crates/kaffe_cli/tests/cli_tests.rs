@@ -32,3 +32,27 @@ fn test_cli_build_out_file() {
     assert!(contents.contains("type User = {"));
     assert!(contents.contains("export function canEdit"));
 }
+
+#[test]
+fn test_cli_build_missing_out_value() {
+    let output = Command::new(env!("CARGO_BIN_EXE_kaffe"))
+        .args(["build", "examples/main.kaf", "--out"])
+        .current_dir("../..")
+        .output()
+        .expect("failed to run kaffe build --out");
+
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Missing output path after --out"));
+}
+
+#[test]
+fn test_cli_build_rejects_unexpected_args() {
+    let output = Command::new(env!("CARGO_BIN_EXE_kaffe"))
+        .args(["build", "examples/main.kaf", "--wat"])
+        .current_dir("../..")
+        .output()
+        .expect("failed to run kaffe build with unexpected args");
+
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Unexpected arguments"));
+}
