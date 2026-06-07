@@ -363,17 +363,17 @@ impl Parser {
                 parts.push(TemplatePart::Literal(remaining[..start].to_string()));
             }
 
-            let interpolation_col = span.col + remaining[..start].chars().count() + 1;
+            let (interpolation_line, interpolation_col) =
+                template_offset_position(span, &remaining[..start]);
             let after = &remaining[start + 2..];
             if let Some(end) = after.find('}') {
-                let expr_str = &after[..end];
-                let expr = Self::parse_dotted_ident(expr_str, span.line, interpolation_col)?;
+                let expr = Self::parse_dotted_ident(&after[..end], interpolation_line, interpolation_col)?;
                 parts.push(TemplatePart::Interpolated(Box::new(expr)));
                 remaining = &after[end + 1..];
             } else {
                 return Err(ParserError::Parse {
                     message: "unterminated template interpolation".to_string(),
-                    line: span.line,
+                    line: interpolation_line,
                     col: interpolation_col,
                 });
             }
@@ -397,7 +397,7 @@ impl Parser {
         }
 
         let mut parts = trimmed.split('.');
-        let first = parts.next().expect("trimmed string is not empty");
+        let first = parts.next().unwrap();
         if !is_valid_ident(first) {
             return Err(invalid_template_interpolation_error(trimmed, line, col));
         }
@@ -487,4 +487,20 @@ fn invalid_template_interpolation_error(s: &str, line: usize, col: usize) -> Par
         line,
         col,
     }
+}
+
+fn template_offset_position(span: &Span, prefix: &str) -> (usize, usize) {
+    let mut line = span.line;
+    let mut col = span.col + 1;
+
+    for ch in prefix.chars() {
+        if ch == '\n' {
+            line += 1;
+            col = 1;
+        } else {
+            col += 1;
+        }
+    }
+
+    (line, col)
 }
