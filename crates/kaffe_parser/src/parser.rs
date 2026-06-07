@@ -65,7 +65,7 @@ impl Parser {
 
     fn parse_item(&mut self) -> Result<Item, ParserError> {
         match self.peek() {
-            Token::KwExport => {
+            Token::ExportMarker => {
                 self.advance();
                 let item = self.parse_item()?;
                 Ok(Item::Export(Box::new(item)))

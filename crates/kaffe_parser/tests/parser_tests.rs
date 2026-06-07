@@ -29,7 +29,7 @@ fn test_parse_function() {
 
 #[test]
 fn test_parse_export_fn() {
-    let src = "export fn hello(name: string): string =>\n  \"Hello\"";
+    let src = "+fn hello(name: string): string =>\n  \"Hello\"";
     let module = parse(src).expect("parse failed");
     assert!(matches!(&module.items[0], Item::Export(_)));
 }

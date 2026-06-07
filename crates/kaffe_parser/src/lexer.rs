@@ -5,7 +5,6 @@ use std::fmt;
 pub enum Token {
     KwType,
     KwFn,
-    KwExport,
     KwIf,
     KwElse,
     KwIn,
@@ -18,6 +17,7 @@ pub enum Token {
     EqEq,
     Neq,
     Assign,
+    ExportMarker,
     Plus,
     Minus,
     Star,
@@ -173,7 +173,6 @@ fn lex_line(
             let token = match ident.as_str() {
                 "type" => Token::KwType,
                 "fn" => Token::KwFn,
-                "export" => Token::KwExport,
                 "if" => Token::KwIf,
                 "else" => Token::KwElse,
                 "in" => Token::KwIn,
@@ -267,8 +266,16 @@ fn lex_line(
                 }
             }
             '+' => {
+                // Check if this is an export marker (at start of statement) or arithmetic plus
+                // Export marker appears when previous token is Newline, Indent, Dedent, or we're at start
+                let is_export_marker = tokens.is_empty() 
+                    || matches!(tokens.last().map(|t| &t.token), Some(Token::Newline) | Some(Token::Indent) | Some(Token::Dedent));
                 pos += 1;
-                Token::Plus
+                if is_export_marker {
+                    Token::ExportMarker
+                } else {
+                    Token::Plus
+                }
             }
             '-' => {
                 pos += 1;

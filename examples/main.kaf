@@ -4,8 +4,8 @@ type User =
   age?: number
   role: "admin" | "editor" | "reader"
 
-export fn canEdit(user: User): boolean =>
++fn canEdit(user: User): boolean =>
   user.role in ["admin", "editor"]
 
-export fn greet(user: User): string =>
++fn greet(user: User): string =>
   "Hello, #{user.name}"

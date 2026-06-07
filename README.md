@@ -47,10 +47,10 @@ type User =
   age?: number
   role: "admin" | "editor" | "reader"
 
-export fn canEdit(user: User): boolean =>
++fn canEdit(user: User): boolean =>
   user.role in ["admin", "editor"]
 
-export fn greet(user: User): string =>
++fn greet(user: User): string =>
   "Hello, #{user.name}"
 ```
 
@@ -172,7 +172,7 @@ fn add(a: number, b: number): number =>
 ### Exported functions
 
 ```kaffe
-export fn hello(name: string): string =>
++fn hello(name: string): string =>
   "Hello, #{name}"
 ```
 
