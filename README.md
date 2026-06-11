@@ -281,30 +281,31 @@ A hand-written lexer/parser is preferred for the first version. The language sho
 
 ### Milestone 1: Lexer and parser
 
-- [ ] Tokenize `.kaf` source
-- [ ] Support indentation-aware tokens
-- [ ] Parse type aliases
-- [ ] Parse function declarations
-- [ ] Parse basic expressions
-- [ ] Produce a simple AST
-- [ ] Print AST as debug output
+- [x] Tokenize `.kaf` source
+- [x] Support indentation-aware tokens
+- [x] Parse type aliases
+- [x] Parse function declarations
+- [x] Parse basic expressions
+- [x] Produce a simple AST
+- [x] Print AST as debug output
 
 ### Milestone 2: TypeScript emitter
 
-- [ ] Emit type aliases
-- [ ] Emit functions
-- [ ] Emit string, number, boolean, array, and object literals
-- [ ] Emit template strings
-- [ ] Emit `if` expressions
-- [ ] Emit `in` as `.includes(...)`
-- [ ] Preserve readable output
+- [x] Emit type aliases
+- [x] Emit functions
+- [x] Emit string, number, boolean, and array literals
+- [ ] Emit object literals
+- [x] Emit template strings
+- [x] Emit `if` expressions
+- [x] Emit `in` as `.includes(...)`
+- [x] Preserve readable output
 
 ### Milestone 3: CLI
 
-- [ ] `kaffe parse`
-- [ ] `kaffe build`
-- [ ] Useful syntax errors with line/column
-- [ ] Basic test suite
+- [x] `kaffe parse`
+- [x] `kaffe build`
+- [x] Useful syntax errors with line/column
+- [x] Basic test suite
 
 ### Milestone 4: Basic checker
 
