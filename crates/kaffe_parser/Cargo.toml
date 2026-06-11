@@ -1,0 +1,7 @@
+[package]
+name = "kaffe_parser"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+kaffe_ast = { path = "../kaffe_ast" }

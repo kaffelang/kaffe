@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "crates/kaffe_ast",
+    "crates/kaffe_parser",
+    "crates/kaffe_emit_ts",
+    "crates/kaffe_cli",
+]
+resolver = "2"

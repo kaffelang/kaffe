@@ -1,0 +1,10 @@
+[package]
+name = "kaffe_emit_ts"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+kaffe_ast = { path = "../kaffe_ast" }
+
+[dev-dependencies]
+kaffe_parser = { path = "../kaffe_parser" }
